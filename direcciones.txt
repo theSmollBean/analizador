@@ -1,5 +1,0 @@
-TABLA DE DIRECCIONES 
-ID	TOKEN	LINEA	VCI 
----	---	---	---
-comb@	-54	1	0
-fact@	-54	3	0

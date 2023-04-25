@@ -2,7 +2,10 @@ import re
 
 from tkinter import filedialog
 
-file_path = filedialog.askopenfilename()
+file_path = filedialog.askopenfilename(initialdir=".")
+
+prioridades = {'*':60, '/':60, '%':60, '+': 50, '-': 50, '<': 40, '>': 40, '<=':40,
+                       '>=':40, '==':40, '!=':40, '!': 30, '&&': 20, '||': 10, '=': 0}
 
 try:
     with open(file_path, "r") as archivo, open("simbolos.txt", "w") as simbolos, open("direcciones.txt", "w") as direcciones:
@@ -17,8 +20,6 @@ try:
         nlineas = 0
         simbolos_dic = {} #Arreglo para almacenar los simbolos
         
-        prioridades = {'*':60, '/':60, '%':60, '+': 50, '-': 50, '<': 40, '>': 40, '<=':40,
-                       '>=':40, '==':40, '!=':40, '!': 30, '&&': 20, '||': 10, '=': 0}
         vci = []
         direcciones_VCI = []
         operadores_VCI = []
@@ -31,6 +32,8 @@ try:
             t_dir = re.compile(r'[A-Za-z]+@$')
             constante = re.compile(r'[0-9]+')
             operador = re.compile(r'[+\-*\/%<>=!&|]++')
+
+            
 
             if(bool(t_simb.match(tokens[0]))):
                 if tokens[0] not in simbolos_dic or simbolos_dic[tokens[0]] != ambito:
@@ -67,3 +70,16 @@ except FileNotFoundError:
     print("Archivo no encontrado/seleccionado")
 
 
+def addOperador(operador):
+    # Si la pila está vacía, se agrega el operador
+    if len(operadores_VCI) == 0:
+        operadores_VCI.append(operador)
+    elif prioridades.get(operador) > prioridades.get(operadores_VCI[-1]):
+        operadores_VCI.append(operador)
+    else:
+        while prioridades.get(operador) <= prioridades.get(operadores_VCI[-1]):
+            vci.append(operadores_VCI.pop())
+            if len(operadores_VCI) == 0:
+                break
+        operadores_VCI.append(operador)
+    

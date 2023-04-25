@@ -6,14 +6,6 @@ N&	-51	0	0	0	0	comb@
 R%	-52	0	0	0	0	comb@
 I%	-52	0	0	0	0	fact@
 J&	-51	0	0	0	0	fact@
-X%	-52	0	0	0	0	fact@
 R%	-52	0	0	0	0	fact@
-I%	-52	0	0	0	0	fact@
-I&	-51	0	0	0	0	fact@
-I&	-51	0	0	0	0	fact@
-N&	-51	0	0	0	0	fact@
-N&	-51	0	0	0	0	fact@
-I&	-51	0	0	0	0	fact@
-I&	-51	0	0	0	0	fact@
 I&	-51	0	0	0	0	fact@
 N&	-51	0	0	0	0	fact@

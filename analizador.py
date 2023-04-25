@@ -1,10 +1,6 @@
 import re
 
-import tkinter as tk
 from tkinter import filedialog
-
-root = tk.Tk()
-root.withdraw()
 
 file_path = filedialog.askopenfilename()
 
@@ -19,20 +15,55 @@ try:
         direcciones.write("---\t---\t---\t---\n")
 
         nlineas = 0
+        simbolos_dic = {} #Arreglo para almacenar los simbolos
+        
+        prioridades = {'*':60, '/':60, '%':60, '+': 50, '-': 50, '<': 40, '>': 40, '<=':40,
+                       '>=':40, '==':40, '!=':40, '!': 30, '&&': 20, '||': 10, '=': 0}
+        vci = []
+        direcciones_VCI = []
+        operadores_VCI = []
+        estatutos_VCI = []
+
         for linea in archivo:
             tokens = linea.split(",")
 
             t_simb = re.compile(r'[A-Z&|%]')
             t_dir = re.compile(r'[A-Za-z]+@$')
+            constante = re.compile(r'[0-9]+')
+            operador = re.compile(r'[+\-*\/%<>=!&|]++')
 
             if(bool(t_simb.match(tokens[0]))):
-                 simbolos.write(tokens[0] +"\t" + tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
-                 nlineas += 1
+                if tokens[0] not in simbolos_dic or simbolos_dic[tokens[0]] != ambito:
+                    simbolos_dic[tokens[0]] = ambito
+                    simbolos.write(tokens[0] +"\t" + tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
+                    nlineas += 1
+
             elif(bool(t_dir.match(tokens[0]))):
                 direcciones.write(tokens[0] + "\t" + tokens[1] + "\t" + tokens[3] + "\t0" + "\n")
                 nlineas += 1
                 ambito = tokens[0]
+
+            # Si el token es una constante, o bien, un ID; entra directamente al VCI
+            if(bool(t_simb.match(tokens[0])) or bool(constante.match(tokens[0]))):
+                vci.append(tokens[0])
+                
+            # Si el token es un operador, entra a la pila de operadores
+            if(bool(operador.match(tokens[0]))):
+                try:
+                    peek = operadores_VCI[-1]
+                    value = prioridades[peek].values()
+                    if():
+                        print(peek)
+                except:
+                    operadores_VCI.append(tokens[0])             
+                
         print("Archivos generados correctamente")
+
+        print(vci)
+        #print(operadores_VCI)
+
             
 except FileNotFoundError:
     print("Archivo no encontrado/seleccionado")
+
+

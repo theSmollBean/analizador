@@ -1,6 +1,31 @@
 import re
+from Tokens import Tokens
+
 
 from tkinter import filedialog
+
+def checkToken(Tokens):
+    t_simb = re.compile(r'[A-Z&|%]')
+    t_dir = re.compile(r'[A-Za-z]+@$')
+    constante = re.compile(r'[0-9]+')
+    operador = re.compile(r'[+\-*\/%<>=!&|]++')
+    pyc = re.compile(r'[;]')
+
+    if(bool(t_simb.match(tabla_tokens[0]))):
+        tokenType = "simbolo"
+    elif(bool(t_dir.match(tabla_tokens[0]))):
+        tokenType = "procedimiento"
+    elif(bool(constante.match(tabla_tokens[0]))):
+        tokenType = "constante"
+    elif(bool(operador.match(tabla_tokens[0]))):
+        tokenType = "operador"
+    elif(bool(pyc.match(tabla_tokens[0]))):
+        tokenType = "PyC"
+    else:
+        tokenType = "NULL"
+
+    return tokenType
+
 
 file_path = filedialog.askopenfilename()
 
@@ -20,50 +45,75 @@ try:
         prioridades = {'*':60, '/':60, '%':60, '+': 50, '-': 50, '<': 40, '>': 40, '<=':40,
                        '>=':40, '==':40, '!=':40, '!': 30, '&&': 20, '||': 10, '=': 0}
         vci = []
-        direcciones_VCI = []
-        operadores_VCI = []
-        estatutos_VCI = []
+        pilaDirecciones = []
+        pilaOperadores = []
+        pilaEstatutos = []
 
         for linea in archivo:
-            tokens = linea.split(",")
+            tabla_tokens = linea.split(",")
 
-            t_simb = re.compile(r'[A-Z&|%]')
-            t_dir = re.compile(r'[A-Za-z]+@$')
-            constante = re.compile(r'[0-9]+')
-            operador = re.compile(r'[+\-*\/%<>=!&|]++')
+            specificToken = Tokens(tabla_tokens[0], tabla_tokens[1], tabla_tokens[2], tabla_tokens[3])
 
-            if(bool(t_simb.match(tokens[0]))):
-                if tokens[0] not in simbolos_dic or simbolos_dic[tokens[0]] != ambito:
-                    simbolos_dic[tokens[0]] = ambito
-                    simbolos.write(tokens[0] +"\t" + tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
+            tokenType = checkToken(specificToken)
+
+            if(tokenType == "simbolo"):
+                if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:
+                    simbolos_dic[tabla_tokens[0]] = ambito
+                    simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
                     nlineas += 1
 
-            elif(bool(t_dir.match(tokens[0]))):
-                direcciones.write(tokens[0] + "\t" + tokens[1] + "\t" + tokens[3] + "\t0" + "\n")
+            elif(tokenType == "procedimiento"):
+                direcciones.write(tabla_tokens[0] + "\t" + tabla_tokens[1] + "\t" + tabla_tokens[3] + "\t0" + "\n")
                 nlineas += 1
-                ambito = tokens[0]
+                ambito = tabla_tokens[0]
 
             # Si el token es una constante, o bien, un ID; entra directamente al VCI
-            if(bool(t_simb.match(tokens[0])) or bool(constante.match(tokens[0]))):
-                vci.append(tokens[0])
-                
+            if(tokenType == "constante" or tokenType == "simbolo"):
+                vci.append(tabla_tokens[0])
+
             # Si el token es un operador, entra a la pila de operadores
-            if(bool(operador.match(tokens[0]))):
+            if(tokenType == "operador"):
                 try:
-                    peek = operadores_VCI[-1]
-                    value = prioridades[peek].values()
-                    if():
-                        print(peek)
-                except:
-                    operadores_VCI.append(tokens[0])             
-                
+                    #Tope de la pila
+                    peek = pilaOperadores[-1]
+                    peekPriority = prioridades.get(peek)
+                    #Operador encontrado en la tabla de tokens
+                    operador = tabla_tokens[0]
+                    operadorPriority = prioridades.get(operador)
+                    
+                    if(operadorPriority > peekPriority):
+                        pilaOperadores.append(tabla_tokens[0])
+                    else:
+                        while(operadorPriority <= peekPriority):
+                            top = pilaOperadores.pop()
+                            vci.append(top)
+
+                            peek = pilaOperadores[-1]
+                            peekPriority = prioridades.get(peek)
+                            operador = tabla_tokens[0]
+                            operadorPriority = prioridades.get(operador)
+
+                        pilaOperadores.append(tabla_tokens[0])
+                except IndexError:
+                    pilaOperadores.append(tabla_tokens[0])
+
+                # Si el token es un ;, se vacía la pila de operadores
+            if(tokenType == "PyC"):  
+                while(pilaOperadores):
+                            top = pilaOperadores.pop()
+                            vci.append(top)
+            
         print("Archivos generados correctamente")
 
         print(vci)
-        #print(operadores_VCI)
+        print(pilaOperadores)
 
             
 except FileNotFoundError:
     print("Archivo no encontrado/seleccionado")
+
+
+
+    
 
 

@@ -5,21 +5,23 @@ from Tokens import Tokens
 from tkinter import filedialog
 
 def checkToken(Tokens):
-    t_simb = re.compile(r'[A-Z&|%]')
-    t_dir = re.compile(r'[A-Za-z]+@$')
+    ids = re.compile(r'[a-zA-Z][a-zA-Z0-9]*&|[a-zA-Z][a-zA-Z0-9]*%')
+    proc = re.compile(r'[A-Za-z0-9]+@$')
     constante = re.compile(r'[0-9]+')
-    operador = re.compile(r'[+\-*\/%<>=!&|]++')
+    operador = re.compile(r'[+\-*\/%<>=!&|]+')
     pyc = re.compile(r'[;]')
 
-    if(bool(t_simb.match(tabla_tokens[0]))):
+    if(bool(ids.match(Tokens.lexema))):
         tokenType = "simbolo"
-    elif(bool(t_dir.match(tabla_tokens[0]))):
+        print("Símbolo ", Tokens.lexema)
+    elif(bool(proc.match(Tokens.lexema))):
         tokenType = "procedimiento"
-    elif(bool(constante.match(tabla_tokens[0]))):
+        print("Procedimiento ", Tokens.lexema)
+    elif(bool(constante.match(Tokens.lexema))):
         tokenType = "constante"
-    elif(bool(operador.match(tabla_tokens[0]))):
+    elif(bool(operador.match(Tokens.lexema))):
         tokenType = "operador"
-    elif(bool(pyc.match(tabla_tokens[0]))):
+    elif(bool(pyc.match(Tokens.lexema))):
         tokenType = "PyC"
     else:
         tokenType = "NULL"
@@ -51,10 +53,12 @@ try:
 
         for linea in archivo:
             tabla_tokens = linea.split(",")
+            try:
+                specificToken = Tokens(tabla_tokens[0], tabla_tokens[1], tabla_tokens[2], tabla_tokens[3])
 
-            specificToken = Tokens(tabla_tokens[0], tabla_tokens[1], tabla_tokens[2], tabla_tokens[3])
-
-            tokenType = checkToken(specificToken)
+                tokenType = checkToken(specificToken)
+            except IndexError:
+                print(tabla_tokens[0], tabla_tokens[1], tabla_tokens[2], tabla_tokens[3])
 
             if(tokenType == "simbolo"):
                 if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:

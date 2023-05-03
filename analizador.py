@@ -43,6 +43,7 @@ try:
 
         nlineas = 0
         simbolos_dic = {} #Arreglo para almacenar los simbolos
+        direcciones_dic = [] #Arreglo para almacenar los direcciones
         
         prioridades = {'*':60, '/':60, '%':60, '+': 50, '-': 50, '<': 40, '>': 40, '<=':40,
                        '>=':40, '==':40, '!=':40, '!': 30, '&&': 20, '||': 10, '=': 0}
@@ -68,9 +69,11 @@ try:
                     nlineas += 1
 
             elif(tokenType == "procedimiento"):
-                direcciones.write(tabla_tokens[0] + "\t" + tabla_tokens[1] + "\t" + tabla_tokens[3] + "\t0" + "\n")
-                nlineas += 1
-                ambito = tabla_tokens[0]
+                if tabla_tokens[0] not in direcciones_dic:
+                    direcciones_dic.append(tabla_tokens[0])
+                    direcciones.write(tabla_tokens[0] + "\t" + tabla_tokens[1] + "\t" + tabla_tokens[3] + "\t0" + "\n")
+                    nlineas += 1
+                    ambito = tabla_tokens[0]
 
             # Si el token es una constante, o bien, un ID; entra directamente al VCI
             if(tokenType == "constante" or tokenType == "simbolo"):

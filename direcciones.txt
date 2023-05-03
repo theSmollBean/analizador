@@ -1,13 +1,8 @@
 TABLA DE DIRECCIONES 
 ID	TOKEN	LINEA	VCI 
 ---	---	---	---
-prueba1@	-54	1
-	0
-fact@	-54	3
-	0
-pot@	-54	13
-	0
-fact@	-54	22
-	0
-pot@	-54	23
-	0
+prueba1@	-54	1	0
+fact@	-54	3	0
+pot@	-54	13	0
+fact@	-54	22	0
+pot@	-54	23	0

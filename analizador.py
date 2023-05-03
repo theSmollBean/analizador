@@ -6,7 +6,7 @@ from tkinter import filedialog
 
 def checkToken(Tokens):
     ids = re.compile(r'[a-zA-Z][a-zA-Z0-9]*&|[a-zA-Z][a-zA-Z0-9]*%')
-    proc = re.compile(r'[A-Za-z0-9]+@$')
+    proc = re.compile(r'[a-zA-Z][A-Za-z0-9]+@$')
     constante = re.compile(r'[0-9]+')
     operador = re.compile(r'[+\-*\/%<>=!&|]+')
     pyc = re.compile(r'[;]')
@@ -32,7 +32,7 @@ def checkToken(Tokens):
 file_path = filedialog.askopenfilename()
 
 try:
-    with open(file_path, "r") as archivo, open("simbolos.txt", "w") as simbolos, open("direcciones.txt", "w") as direcciones:
+    with open(file_path, "r+") as archivo, open("simbolos.txt", "w") as simbolos, open("direcciones.txt", "w") as direcciones:
         simbolos.write("TABLA DE SÍMBOLOS \n")
         simbolos.write("ID\tTOKEN\tVALOR\tD1\tD2\tPRT\tAMBITO\n")
         simbolos.write("---\t---\t---\t---\t---\t---\t---\n")
@@ -52,13 +52,14 @@ try:
         pilaEstatutos = []
 
         for linea in archivo:
+            linea = linea.strip() + ','
             tabla_tokens = linea.split(",")
             try:
                 specificToken = Tokens(tabla_tokens[0], tabla_tokens[1], tabla_tokens[2], tabla_tokens[3])
 
                 tokenType = checkToken(specificToken)
             except IndexError:
-                print(tabla_tokens[0], tabla_tokens[1], tabla_tokens[2], tabla_tokens[3])
+                print("El error está en", tabla_tokens[0])
 
             if(tokenType == "simbolo"):
                 if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:

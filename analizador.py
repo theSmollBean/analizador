@@ -11,6 +11,7 @@ def checkToken(Tokens):
     operador = re.compile(r'[+\-*\/%<>=!&|]+')
     pyc = re.compile(r'[;]')
 
+    
     if(bool(ids.match(Tokens.lexema))):
         tokenType = "simbolo"
         print("Símbolo ", Tokens.lexema)

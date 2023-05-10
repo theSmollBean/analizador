@@ -78,6 +78,7 @@ try:
                             dimensiones_token = dimensiones.split(",")
                             d1 = dimensiones_token[0]
                             siguiente_token = archivo.readline().strip()
+
                             if siguiente_token[0] == ",":
                                 dimensiones = archivo.readline().strip()
                                 dimensiones_token = dimensiones.split(",")
@@ -99,41 +100,41 @@ try:
             # procesar linea_actual y linea_siguiente aquí
             linea_actual = linea_siguiente
 
-            # Si el token es una constante, o bien, un ID; entra directamente al VCI
-            # if(tokenType == "constante" or tokenType == "simbolo"):
-            #     vci.append(tabla_tokens[0])
+            #Si el token es una constante, o bien, un ID; entra directamente al VCI
+            if(tokenType == "constante" or tokenType == "simbolo"):
+                vci.append(tabla_tokens[0])
 
-            # # Si el token es un operador, entra a la pila de operadores
-            # if(tokenType == "operador"):
-            #     try:
-            #         #Tope de la pila
-            #         peek = pilaOperadores[-1]
-            #         peekPriority = prioridades.get(peek)
-            #         #Operador encontrado en la tabla de tokens
-            #         operador = tabla_tokens[0]
-            #         operadorPriority = prioridades.get(operador)
+            # Si el token es un operador, entra a la pila de operadores
+            if(tokenType == "operador"):
+                try:
+                    #Tope de la pila
+                    peek = pilaOperadores[-1]
+                    peekPriority = prioridades.get(peek)
+                    #Operador encontrado en la tabla de tokens
+                    operador = tabla_tokens[0]
+                    operadorPriority = prioridades.get(operador)
                     
-            #         if(operadorPriority > peekPriority):
-            #             pilaOperadores.append(tabla_tokens[0])
-            #         else:
-            #             while(operadorPriority <= peekPriority):
-            #                 top = pilaOperadores.pop()
-            #                 vci.append(top)
+                    if(operadorPriority > peekPriority):
+                        pilaOperadores.append(tabla_tokens[0])
+                    else:
+                        while(operadorPriority <= peekPriority):
+                            top = pilaOperadores.pop()
+                            vci.append(top)
 
-            #                 peek = pilaOperadores[-1]
-            #                 peekPriority = prioridades.get(peek)
-            #                 operador = tabla_tokens[0]
-            #                 operadorPriority = prioridades.get(operador)
+                            peek = pilaOperadores[-1]
+                            peekPriority = prioridades.get(peek)
+                            operador = tabla_tokens[0]
+                            operadorPriority = prioridades.get(operador)
 
-            #             pilaOperadores.append(tabla_tokens[0])
-            #     except IndexError:
-            #         pilaOperadores.append(tabla_tokens[0])
+                        pilaOperadores.append(tabla_tokens[0])
+                except IndexError:
+                    pilaOperadores.append(tabla_tokens[0])
 
-            #     # Si el token es un ;, se vacía la pila de operadores
-            # if(tokenType == "PyC"):  
-            #     while(pilaOperadores):
-            #                 top = pilaOperadores.pop()
-            #                 vci.append(top)            
+                # Si el token es un ;, se vacía la pila de operadores
+            if(tokenType == "PyC"):  
+                while(pilaOperadores):
+                            top = pilaOperadores.pop()
+                            vci.append(top)
             
         print("Archivos generados correctamente")
 
@@ -143,9 +144,3 @@ try:
             
 except FileNotFoundError:
     print("Archivo no encontrado/seleccionado")
-
-
-
-    
-
-

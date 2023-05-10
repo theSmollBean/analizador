@@ -5,18 +5,17 @@ from Tokens import Tokens
 from tkinter import filedialog
 
 def checkToken(Tokens):
-    ids = re.compile(r'[a-zA-Z][a-zA-Z0-9]*&|[a-zA-Z][a-zA-Z0-9]*%')
-    proc = re.compile(r'[a-zA-Z][A-Za-z0-9]+@$')
+    ids = re.compile(r'[a-zA-Z][a-zA-Z0-9]*&|[a-zA-Z][a-zA-Z0-9]*%|[a-zA-Z][a-zA-Z0-9]*\$')
+    proc = re.compile(r'[a-zA-Z][A-Za-z0-9]+@')
     constante = re.compile(r'[0-9]+')
     operador = re.compile(r'[+\-*\/%<>=!&|]+')
     pyc = re.compile(r'[;]')
 
     if(bool(ids.match(Tokens.lexema))):
         tokenType = "simbolo"
-        print("Símbolo ", Tokens.lexema)
+        #print("Símbolo ", Tokens.lexema)
     elif(bool(proc.match(Tokens.lexema))):
         tokenType = "procedimiento"
-        print("Procedimiento ", Tokens.lexema)
     elif(bool(constante.match(Tokens.lexema))):
         tokenType = "constante"
     elif(bool(operador.match(Tokens.lexema))):
@@ -52,9 +51,15 @@ try:
         pilaOperadores = []
         pilaEstatutos = []
 
-        for linea in archivo:
-            linea = linea.strip() + ','
-            tabla_tokens = linea.split(",")
+        linea_actual = archivo.readline().strip()
+
+        #Mientras nos encontremos en la línea actual
+        while linea_actual:
+            #Se lee la línea siguiente
+            linea_siguiente = archivo.readline().strip()
+            linea_actual = linea_actual.strip() + ','
+            tabla_tokens = linea_actual.split(",")
+            siguiente_token = linea_siguiente.split(",")
             try:
                 specificToken = Tokens(tabla_tokens[0], tabla_tokens[1], tabla_tokens[2], tabla_tokens[3])
 
@@ -63,10 +68,25 @@ try:
                 print("El error está en", tabla_tokens[0])
 
             if(tokenType == "simbolo"):
-                if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:
-                    simbolos_dic[tabla_tokens[0]] = ambito
-                    simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
-                    nlineas += 1
+                try:
+                    if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:
+                        simbolos_dic[tabla_tokens[0]] = ambito
+
+                        if siguiente_token[0] == "[":
+                            dimensiones = archivo.readline().strip()
+                            dimensiones_token = dimensiones.split(",")
+                            d1 = dimensiones_token[0]
+                            siguiente_token = archivo.readline().strip()
+                            if siguiente_token[0] == ",":
+                                dimensiones = archivo.readline().strip()
+                                dimensiones_token = dimensiones.split(",")
+                                d2 = dimensiones_token[0]
+                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t" + d2 +"\t0\t" + ambito + "\n")         
+                        else: 
+                            simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
+                        nlineas += 1
+                except NameError:
+                    print("El error está en el " + tabla_tokens[0] +" "+ tabla_tokens[1]+" "+ tabla_tokens[2])
 
             elif(tokenType == "procedimiento"):
                 if tabla_tokens[0] not in direcciones_dic:
@@ -75,41 +95,44 @@ try:
                     nlineas += 1
                     ambito = tabla_tokens[0]
 
+            # procesar linea_actual y linea_siguiente aquí
+            linea_actual = linea_siguiente
+
             # Si el token es una constante, o bien, un ID; entra directamente al VCI
-            if(tokenType == "constante" or tokenType == "simbolo"):
-                vci.append(tabla_tokens[0])
+            # if(tokenType == "constante" or tokenType == "simbolo"):
+            #     vci.append(tabla_tokens[0])
 
-            # Si el token es un operador, entra a la pila de operadores
-            if(tokenType == "operador"):
-                try:
-                    #Tope de la pila
-                    peek = pilaOperadores[-1]
-                    peekPriority = prioridades.get(peek)
-                    #Operador encontrado en la tabla de tokens
-                    operador = tabla_tokens[0]
-                    operadorPriority = prioridades.get(operador)
+            # # Si el token es un operador, entra a la pila de operadores
+            # if(tokenType == "operador"):
+            #     try:
+            #         #Tope de la pila
+            #         peek = pilaOperadores[-1]
+            #         peekPriority = prioridades.get(peek)
+            #         #Operador encontrado en la tabla de tokens
+            #         operador = tabla_tokens[0]
+            #         operadorPriority = prioridades.get(operador)
                     
-                    if(operadorPriority > peekPriority):
-                        pilaOperadores.append(tabla_tokens[0])
-                    else:
-                        while(operadorPriority <= peekPriority):
-                            top = pilaOperadores.pop()
-                            vci.append(top)
+            #         if(operadorPriority > peekPriority):
+            #             pilaOperadores.append(tabla_tokens[0])
+            #         else:
+            #             while(operadorPriority <= peekPriority):
+            #                 top = pilaOperadores.pop()
+            #                 vci.append(top)
 
-                            peek = pilaOperadores[-1]
-                            peekPriority = prioridades.get(peek)
-                            operador = tabla_tokens[0]
-                            operadorPriority = prioridades.get(operador)
+            #                 peek = pilaOperadores[-1]
+            #                 peekPriority = prioridades.get(peek)
+            #                 operador = tabla_tokens[0]
+            #                 operadorPriority = prioridades.get(operador)
 
-                        pilaOperadores.append(tabla_tokens[0])
-                except IndexError:
-                    pilaOperadores.append(tabla_tokens[0])
+            #             pilaOperadores.append(tabla_tokens[0])
+            #     except IndexError:
+            #         pilaOperadores.append(tabla_tokens[0])
 
-                # Si el token es un ;, se vacía la pila de operadores
-            if(tokenType == "PyC"):  
-                while(pilaOperadores):
-                            top = pilaOperadores.pop()
-                            vci.append(top)
+            #     # Si el token es un ;, se vacía la pila de operadores
+            # if(tokenType == "PyC"):  
+            #     while(pilaOperadores):
+            #                 top = pilaOperadores.pop()
+            #                 vci.append(top)            
             
         print("Archivos generados correctamente")
 

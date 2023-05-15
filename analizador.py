@@ -10,8 +10,8 @@ def checkToken(Tokens):
     constante = re.compile(r'[0-9]+')
     operador = re.compile(r'[+\-*\/%<>=!&|]+')
     pyc = re.compile(r'[;]')
+    declaracion =  re.compile(r'[var]')
 
-    
     if(bool(ids.match(Tokens.lexema))):
         tokenType = "simbolo"
         #print("Símbolo ", Tokens.lexema)
@@ -23,6 +23,8 @@ def checkToken(Tokens):
         tokenType = "operador"
     elif(bool(pyc.match(Tokens.lexema))):
         tokenType = "PyC"
+    elif(bool(declaracion.match(Tokens.lexema))):
+        tokenType = "var"
     else:
         tokenType = "NULL"
 
@@ -52,6 +54,9 @@ try:
         pilaOperadores = []
         pilaEstatutos = []
 
+        inicioVar = 0
+        finVar = 0
+
         linea_actual = archivo.readline().strip()
 
         #Mientras nos encontremos en la línea actual
@@ -68,7 +73,7 @@ try:
             except IndexError:
                 print("El error está en", tabla_tokens[0])
 
-            if(tokenType == "simbolo"):
+            if(tokenType == "simbolo" and inicioVar == 1):
                 try:
                     if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:
                         simbolos_dic[tabla_tokens[0]] = ambito
@@ -83,7 +88,9 @@ try:
                                 dimensiones = archivo.readline().strip()
                                 dimensiones_token = dimensiones.split(",")
                                 d2 = dimensiones_token[0]
-                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t" + d2 +"\t0\t" + ambito + "\n")         
+                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t" + d2 +"\t0\t" + ambito + "\n")
+                            else:
+                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t0\t0\t" + ambito + "\n")         
                         else: 
                             simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
                         nlineas += 1
@@ -130,11 +137,19 @@ try:
                 except IndexError:
                     pilaOperadores.append(tabla_tokens[0])
 
-                # Si el token es un ;, se vacía la pila de operadores
+            # Si el token es un ;, se vacía la pila de operadores
             if(tokenType == "PyC"):  
                 while(pilaOperadores):
-                            top = pilaOperadores.pop()
-                            vci.append(top)
+                    top = pilaOperadores.pop()
+                    vci.append(top)
+                
+                if(inicioVar == 1):
+                    finVar = 1
+                    inicioVar = 0
+            
+            #Si el token es 'var', da el inicio a declaración de varibales
+            if(tokenType == "var"):
+                inicioVar = 1;
             
         print("Archivos generados correctamente")
 

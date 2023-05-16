@@ -1,12 +1,9 @@
 TABLA DE SÍMBOLOS 
 ID	TOKEN	VALOR	D1	D2	PRT	AMBITO
 ---	---	---	---	---	---	---
-c%	-52	0	4	0	0	prueba3@
-m%	-52	0	4	5	0	prueba3@
-p%	-52	0	0	0	0	prueba3@
-g%	-52	0	8	3	0	prueba3@
-i&	-51	0	0	0	0	prueba3@
-nom$	-53	0	0	0	0	prueba3@
-j&	-51	0	0	0	0	prueba3@
-nom%	-53	0	0	0	0	prueba3@
-dir$	-53	0	0	0	0	prueba3@
+prom%	-52	0	0	0	0	prueba2@
+i&	-51	0	0	0	0	prueba2@
+nom$	-53	0	0	0	0	prueba2@
+n&	-51	0	0	0	0	prueba2@
+cal%	-52	0	0	0	0	prueba2@
+dir$	-53	0	0	0	0	prueba2@

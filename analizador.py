@@ -11,6 +11,8 @@ def checkToken(Tokens):
     operador = re.compile(r'[+\-*\/%<>=!&|]+')
     pyc = re.compile(r'[;]')
     declaracion =  re.compile(r'[var]')
+    inicio =  re.compile(r'[inicio]')
+    fin =  re.compile(r'[fin]')
 
     if(bool(ids.match(Tokens.lexema))):
         tokenType = "simbolo"
@@ -25,12 +27,18 @@ def checkToken(Tokens):
         tokenType = "PyC"
     elif(bool(declaracion.match(Tokens.lexema))):
         tokenType = "var"
+    elif(bool(inicio.match(Tokens.lexema))):
+        tokenType = "inicio"
+    elif(bool(fin.match(Tokens.lexema))):
+        tokenType = "fin"
     else:
-        tokenType = "NULL"
+        tokenType = "Ignored"
 
     return tokenType
 
-
+def semantica(tabla_tokens, siguiente_token):
+    return 0
+    
 file_path = filedialog.askopenfilename()
 
 try:
@@ -44,7 +52,8 @@ try:
         direcciones.write("---\t---\t---\t---\n")
 
         nlineas = 0
-        simbolos_dic = {} #Arreglo para almacenar los simbolos
+        simbolos_n = []
+        simbolos_dic = {} #Arreglo para almacenar los simbolos con sus ambitos
         direcciones_dic = [] #Arreglo para almacenar los direcciones
         
         prioridades = {'*':60, '/':60, '%':60, '+': 50, '-': 50, '<': 40, '>': 40, '<=':40,
@@ -56,6 +65,10 @@ try:
 
         inicioVar = 0
         finVar = 0
+        contFin = 0
+        contInicio = 0
+        inicio = 0
+        fin = 0
 
         linea_actual = archivo.readline().strip()
 
@@ -71,29 +84,34 @@ try:
 
                 tokenType = checkToken(specificToken)
             except IndexError:
-                print("El error está en", tabla_tokens[0])
+                print("El error está en", tabla_tokens)
 
             if(tokenType == "simbolo" and inicioVar == 1):
                 try:
-                    if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:
-                        simbolos_dic[tabla_tokens[0]] = ambito
+                    variableN = tabla_tokens[0][:-1]
+                    if(variableN in simbolos_n):
+                        print("ERROR: VARIABLE", tabla_tokens[0] ,"REPETIDA EN LINEA", tabla_tokens[3])
+                    else:
+                        if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:
+                            simbolos_dic[tabla_tokens[0]] = ambito
 
-                        if siguiente_token[0] == "[":
-                            dimensiones = archivo.readline().strip()
-                            dimensiones_token = dimensiones.split(",")
-                            d1 = dimensiones_token[0]
-                            siguiente_token = archivo.readline().strip()
-
-                            if siguiente_token[0] == ",":
+                            if siguiente_token[0] == "[":
                                 dimensiones = archivo.readline().strip()
                                 dimensiones_token = dimensiones.split(",")
-                                d2 = dimensiones_token[0]
-                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t" + d2 +"\t0\t" + ambito + "\n")
-                            else:
-                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t0\t0\t" + ambito + "\n")         
-                        else: 
-                            simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
-                        nlineas += 1
+                                d1 = dimensiones_token[0]
+                                siguiente_token = archivo.readline().strip()
+
+                                if siguiente_token[0] == ",":
+                                    dimensiones = archivo.readline().strip()
+                                    dimensiones_token = dimensiones.split(",")
+                                    d2 = dimensiones_token[0]
+                                    simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t" + d2 +"\t0\t" + ambito + "\n")
+                                else:
+                                    simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t0\t0\t" + ambito + "\n")         
+                            else: 
+                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
+
+                        simbolos_n.append(tabla_tokens[0][:-1])
                 except NameError:
                     print("El error está en el " + tabla_tokens[0] +" "+ tabla_tokens[1]+" "+ tabla_tokens[2])
 
@@ -104,15 +122,12 @@ try:
                     nlineas += 1
                     ambito = tabla_tokens[0]
 
-            # procesar linea_actual y linea_siguiente aquí
-            linea_actual = linea_siguiente
-
             #Si el token es una constante, o bien, un ID; entra directamente al VCI
-            if(tokenType == "constante" or tokenType == "simbolo"):
+            if((tokenType == "constante" or tokenType == "simbolo") and inicio == 1):
                 vci.append(tabla_tokens[0])
 
             # Si el token es un operador, entra a la pila de operadores
-            if(tokenType == "operador"):
+            elif(tokenType == "operador" and inicio == 1):
                 try:
                     #Tope de la pila
                     peek = pilaOperadores[-1]
@@ -138,24 +153,38 @@ try:
                     pilaOperadores.append(tabla_tokens[0])
 
             # Si el token es un ;, se vacía la pila de operadores
-            if(tokenType == "PyC"):  
-                while(pilaOperadores):
-                    top = pilaOperadores.pop()
-                    vci.append(top)
+            elif(tokenType == "PyC"):  
+                if(inicio == 1):
+                    while(pilaOperadores):
+                        top = pilaOperadores.pop()
+                        vci.append(top)
                 
                 if(inicioVar == 1):
                     finVar = 1
                     inicioVar = 0
             
             #Si el token es 'var', da el inicio a declaración de varibales
-            if(tokenType == "var"):
+            elif(tokenType == "var"):
                 inicioVar = 1;
+        
+            elif(tokenType == "inicio"):
+                contInicio =+ 1
+                inicio = 1
+                semantica()
+
+            elif(tokenType == "fin"):
+                contFin =+ 1
+                fin = 1
             
+            # procesar linea_actual y linea_siguiente aquí
+            linea_actual = linea_siguiente
+
         print("Archivos generados correctamente")
 
         print(vci)
-        print(pilaOperadores)
+        #print(pilaOperadores)
 
+        #print(simbolos_n)
             
 except FileNotFoundError:
     print("Archivo no encontrado/seleccionado")

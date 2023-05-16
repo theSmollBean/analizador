@@ -1,4 +1,5 @@
 TABLA DE DIRECCIONES 
 ID	TOKEN	LINEA	VCI 
 ---	---	---	---
-prueba3@	-54	1	0
+prueba2@	-54	1	0
+prom@	-52	8	0

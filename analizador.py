@@ -6,18 +6,22 @@ from tkinter import filedialog
 
 def checkToken(Tokens):
     ids = re.compile(r'[a-zA-Z][a-zA-Z0-9]*&|[a-zA-Z][a-zA-Z0-9]*%|[a-zA-Z][a-zA-Z0-9]*\$')
-    proc = re.compile(r'[a-zA-Z][A-Za-z0-9]+@')
+    proced = re.compile(r'[a-zA-Z][A-Za-z0-9]*@')
     constante = re.compile(r'[0-9]+')
     operador = re.compile(r'[+\-*\/%<>=!&|]+')
     pyc = re.compile(r'[;]')
     declaracion =  re.compile(r'[var]')
     inicio =  re.compile(r'[inicio]')
     fin =  re.compile(r'[fin]')
+    si =  re.compile(r'[si]')
+    sino =  re.compile(r'[sino]')
+    pF =  re.compile(r'[)]')
+    lF =  re.compile(r'[}]')
 
     if(bool(ids.match(Tokens.lexema))):
         tokenType = "simbolo"
         #print("Símbolo ", Tokens.lexema)
-    elif(bool(proc.match(Tokens.lexema))):
+    elif(bool(proced.match(Tokens.lexema))):
         tokenType = "procedimiento"
     elif(bool(constante.match(Tokens.lexema))):
         tokenType = "constante"
@@ -31,18 +35,23 @@ def checkToken(Tokens):
         tokenType = "inicio"
     elif(bool(fin.match(Tokens.lexema))):
         tokenType = "fin"
+    elif(bool(si.match(Tokens.lexema))):
+        tokenType = "si"
+    elif(bool(si.match(Tokens.lexema))):
+        tokenType = "sino"
+    elif(bool(pF.match(Tokens.lexema))):
+        tokenType = "parentesisFinal"
+    elif(bool(lF.match(Tokens.lexema))):
+        tokenType = "llaveFinal"
     else:
         tokenType = "Ignored"
 
     return tokenType
-
-def semantica(tabla_tokens, siguiente_token):
-    return 0
     
 file_path = filedialog.askopenfilename()
 
 try:
-    with open(file_path, "r+") as archivo, open("simbolos.txt", "w") as simbolos, open("direcciones.txt", "w") as direcciones:
+    with open(file_path, "r+") as archivo, open("simbolos.txt", "w") as simbolos, open("direcciones.txt", "w") as direcciones, open("vci.txt", "w") as vci_txt:
         simbolos.write("TABLA DE SÍMBOLOS \n")
         simbolos.write("ID\tTOKEN\tVALOR\tD1\tD2\tPRT\tAMBITO\n")
         simbolos.write("---\t---\t---\t---\t---\t---\t---\n")
@@ -52,7 +61,8 @@ try:
         direcciones.write("---\t---\t---\t---\n")
 
         nlineas = 0
-        simbolos_n = []
+        simbolos_dimension = {}
+        simbolos_repeticion = [] #Arreglo para almacenar los símbolos y verificar que no existan repetidos
         simbolos_dic = {} #Arreglo para almacenar los simbolos con sus ambitos
         direcciones_dic = [] #Arreglo para almacenar los direcciones
         
@@ -69,6 +79,8 @@ try:
         contInicio = 0
         inicio = 0
         fin = 0
+        inicioIf = 0
+        inicioElse = 0
 
         linea_actual = archivo.readline().strip()
 
@@ -89,75 +101,93 @@ try:
             if(tokenType == "simbolo" and inicioVar == 1):
                 try:
                     variableN = tabla_tokens[0][:-1]
-                    if(variableN in simbolos_n):
-                        print("ERROR: VARIABLE", tabla_tokens[0] ,"REPETIDA EN LINEA", tabla_tokens[3])
+                    if(variableN in simbolos_repeticion and simbolos_dic[variableN] == ambito):
+                        print("ERROR: VARIABLE", tabla_tokens[0] ,"REPETIDA EN LINEA", tabla_tokens[3], "AMBITO:", simbolos_dic[variableN])
                     else:
-                        if tabla_tokens[0] not in simbolos_dic or simbolos_dic[tabla_tokens[0]] != ambito:
-                            simbolos_dic[tabla_tokens[0]] = ambito
+                        simbolos_dic[tabla_tokens[0][:-1]] = ambito
 
-                            if siguiente_token[0] == "[":
+                        if siguiente_token[0] == "[":
+                            dimensiones = archivo.readline().strip()
+                            dimensiones_token = dimensiones.split(",")
+                            d1 = dimensiones_token[0]
+                            siguiente_token = archivo.readline().strip()
+
+                            if siguiente_token[0] == ",":
                                 dimensiones = archivo.readline().strip()
                                 dimensiones_token = dimensiones.split(",")
-                                d1 = dimensiones_token[0]
-                                siguiente_token = archivo.readline().strip()
+                                d2 = dimensiones_token[0]
+                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t" + d2 +"\t0\t" + ambito + "\n")
 
-                                if siguiente_token[0] == ",":
-                                    dimensiones = archivo.readline().strip()
-                                    dimensiones_token = dimensiones.split(",")
-                                    d2 = dimensiones_token[0]
-                                    simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t" + d2 +"\t0\t" + ambito + "\n")
-                                else:
-                                    simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t0\t0\t" + ambito + "\n")         
-                            else: 
-                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
+                                simbolos_dimension[tabla_tokens[0]] = 2
+                            else:
+                                simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t" + d1 + "\t0\t0\t" + ambito + "\n")
+                                simbolos_dimension[tabla_tokens[0]] = 1         
+                        else: 
+                            simbolos.write(tabla_tokens[0] +"\t" + tabla_tokens[1] + "\t0\t0\t0\t0\t" + ambito + "\n")
+                            simbolos_dimension[tabla_tokens[0]] = 0
 
-                        simbolos_n.append(tabla_tokens[0][:-1])
+                        simbolos_repeticion.append(tabla_tokens[0][:-1])
                 except NameError:
                     print("El error está en el " + tabla_tokens[0] +" "+ tabla_tokens[1]+" "+ tabla_tokens[2])
 
             elif(tokenType == "procedimiento"):
                 if tabla_tokens[0] not in direcciones_dic:
+                    ambito = tabla_tokens[0]
                     direcciones_dic.append(tabla_tokens[0])
                     direcciones.write(tabla_tokens[0] + "\t" + tabla_tokens[1] + "\t" + tabla_tokens[3] + "\t0" + "\n")
                     nlineas += 1
-                    ambito = tabla_tokens[0]
+
+            #semantica(tabla_tokens, siguiente_token, inicio, simbolos_dimension)
 
             #Si el token es una constante, o bien, un ID; entra directamente al VCI
             if((tokenType == "constante" or tokenType == "simbolo") and inicio == 1):
-                vci.append(tabla_tokens[0])
+                if(tabla_tokens[0][:-1] not in simbolos_dic and tokenType == "simbolo"):
+                    print("ERROR: VARIABLE", tabla_tokens[0] ,"NO DECLARADA EN LINEA", tabla_tokens[3])
+                else:
+                    vci.append(tabla_tokens[:-1])
+                    for token in tabla_tokens:
+                        vci_txt.write(token + "\t")
+                    vci_txt.write("\n")    
 
             # Si el token es un operador, entra a la pila de operadores
             elif(tokenType == "operador" and inicio == 1):
                 try:
                     #Tope de la pila
                     peek = pilaOperadores[-1]
-                    peekPriority = prioridades.get(peek)
+                    peekPriority = prioridades.get(peek[0])
                     #Operador encontrado en la tabla de tokens
-                    operador = tabla_tokens[0]
-                    operadorPriority = prioridades.get(operador)
+                    operador = tabla_tokens
+                    operadorPriority = prioridades.get(operador[0])
                     
                     if(operadorPriority > peekPriority):
-                        pilaOperadores.append(tabla_tokens[0])
+                        pilaOperadores.append(tabla_tokens)
                     else:
                         while(operadorPriority <= peekPriority):
                             top = pilaOperadores.pop()
                             vci.append(top)
+                            for token in top:
+                                vci_txt.write(token + "\t")
+                            vci_txt.write("\n") 
 
-                            peek = pilaOperadores[-1]
-                            peekPriority = prioridades.get(peek)
-                            operador = tabla_tokens[0]
-                            operadorPriority = prioridades.get(operador)
+                            peek = pilaOperadores[:-1]
+                            print(peek)
+                            peekPriority = prioridades.get(peek[0])
+                            operador = tabla_tokens
+                            operadorPriority = prioridades.get(operador[0])
 
-                        pilaOperadores.append(tabla_tokens[0])
+                        pilaOperadores.append(tabla_tokens)
                 except IndexError:
-                    pilaOperadores.append(tabla_tokens[0])
+                    pilaOperadores.append(tabla_tokens)
 
             # Si el token es un ;, se vacía la pila de operadores
             elif(tokenType == "PyC"):  
                 if(inicio == 1):
                     while(pilaOperadores):
                         top = pilaOperadores.pop()
-                        vci.append(top)
+                        vci.append(top[:-1])
+                        for token in top[:-1]:
+                            vci_txt.write(token + "\t")
+                        vci_txt.write("\n")  
                 
                 if(inicioVar == 1):
                     finVar = 1
@@ -170,21 +200,49 @@ try:
             elif(tokenType == "inicio"):
                 contInicio =+ 1
                 inicio = 1
-                semantica()
 
             elif(tokenType == "fin"):
                 contFin =+ 1
                 fin = 1
             
+            elif(tokenType == "si"):
+                inicioIf = 1
+                pilaEstatutos.append(tabla_tokens)
+            
+            elif(tokenType == "parentesisFinal" and inicioIf == 1):
+                while(pilaOperadores):
+                    top = pilaOperadores.pop()
+                    vci.append(top[:-1])
+                    for token in top[:-1]:
+                        vci_txt.write(token + "\t")
+                    vci_txt.write("\n")  
+                vci.append("Vacío\t0\t0\t0")
+                vci_txt.write("Vacío\t0\t0\t0\n")
+                #pilaDirecciones.append(vci[])
+                vci.append("if\t0\t0\t0")
+                vci_txt.write("if\t0\t0\t0\n")
+            
+            elif(tokenType == "llaveFinal" and inicioIf == 1):
+                pilaEstatutos.pop()
+                inicioIf = 0
+                if(siguiente_token[0] == "sino"):
+                    pilaEstatutos.append(siguiente_token)
+                    inicioElse = 1
             # procesar linea_actual y linea_siguiente aquí
             linea_actual = linea_siguiente
 
         print("Archivos generados correctamente")
 
-        print(vci)
+        if(contInicio != contFin):
+            print("ESTATUTO/ESTRUCTURA MAL TERMINADA. HACE FALTA UN INICIO/FIN")
+        
+        
+        for lineaV in vci:
+            print(lineaV)
+        #print(simbolos_dimension)
         #print(pilaOperadores)
-
-        #print(simbolos_n)
+        #print(simbolos_dic)
+        #print(simbolos_repeticion)
             
 except FileNotFoundError:
     print("Archivo no encontrado/seleccionado")

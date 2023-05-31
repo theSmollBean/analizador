@@ -4,6 +4,12 @@ from Tokens import Tokens
 
 from tkinter import filedialog
 
+def obtener_clave_por_valor(diccionario, valor):
+    for clave, v in diccionario.items():
+        if v == valor:
+            return clave
+    return None  # Valor no encontrado en el diccionario
+
 def checkToken(Tokens):
     ids = re.compile(r'[a-zA-Z][a-zA-Z0-9]*&|[a-zA-Z][a-zA-Z0-9]*%|[a-zA-Z][a-zA-Z0-9]*\$')
     proced = re.compile(r'[a-zA-Z][A-Za-z0-9]*@')
@@ -68,7 +74,7 @@ try:
         
         prioridades = {'*':60, '/':60, '%':60, '+': 50, '-': 50, '<': 40, '>': 40, '<=':40,
                        '>=':40, '==':40, '!=':40, '!': 30, '&&': 20, '||': 10, '=': 0}
-        vci = []
+        vci = {}
         pilaDirecciones = []
         pilaOperadores = []
         pilaEstatutos = []
@@ -81,6 +87,7 @@ try:
         fin = 0
         inicioIf = 0
         inicioElse = 0
+        posicionVCI = 31
 
         linea_actual = archivo.readline().strip()
 
@@ -144,7 +151,10 @@ try:
                 if(tabla_tokens[0][:-1] not in simbolos_dic and tokenType == "simbolo"):
                     print("ERROR: VARIABLE", tabla_tokens[0] ,"NO DECLARADA EN LINEA", tabla_tokens[3])
                 else:
-                    vci.append(tabla_tokens[:-1])
+                    vci[posicionVCI] = tabla_tokens[:-1]
+                    posicionVCI += 1
+                    #vci.append(tabla_tokens[:-1])
+                    vci_txt.write(str(obtener_clave_por_valor(vci, tabla_tokens[:-1])) + ": ")
                     for token in tabla_tokens:
                         vci_txt.write(token + "\t")
                     vci_txt.write("\n")    
@@ -164,7 +174,10 @@ try:
                     else:
                         while(operadorPriority <= peekPriority):
                             top = pilaOperadores.pop()
-                            vci.append(top)
+                            vci[posicionVCI] = top
+                            posicionVCI += 1
+                            #vci.append(top)
+                            vci_txt.write(str(obtener_clave_por_valor(vci, top)) + ": ")
                             for token in top:
                                 vci_txt.write(token + "\t")
                             vci_txt.write("\n") 
@@ -184,7 +197,10 @@ try:
                 if(inicio == 1):
                     while(pilaOperadores):
                         top = pilaOperadores.pop()
-                        vci.append(top[:-1])
+                        vci[posicionVCI] = top[:-1]
+                        posicionVCI += 1
+                        #vci.append(top[:-1])
+                        vci_txt.write(str(obtener_clave_por_valor(vci, top[:-1])) + ": ")
                         for token in top[:-1]:
                             vci_txt.write(token + "\t")
                         vci_txt.write("\n")  
@@ -208,26 +224,66 @@ try:
             elif(tokenType == "si"):
                 inicioIf = 1
                 pilaEstatutos.append(tabla_tokens)
-            
+                        
             elif(tokenType == "parentesisFinal" and inicioIf == 1):
                 while(pilaOperadores):
                     top = pilaOperadores.pop()
-                    vci.append(top[:-1])
+                    vci[posicionVCI] = top[:-1]
+                    posicionVCI += 1
+                    #vci.append(top[:-1])
+                    vci_txt.write(str(obtener_clave_por_valor(vci, top[:-1])) + ": ")
                     for token in top[:-1]:
                         vci_txt.write(token + "\t")
                     vci_txt.write("\n")  
-                vci.append("Vacío\t0\t0\t0")
-                vci_txt.write("Vacío\t0\t0\t0\n")
+                vci[posicionVCI] = "Vacio\t0\t0\t0"
+                pilaDirecciones.append(obtener_clave_por_valor(vci, "Vacio\t0\t0\t0"))
+                print(pilaDirecciones)
+                posicionVCI += 1
+                #vci.append("Vacio\t0\t0\t0")
+                #vci_txt.write("Vacio\t0\t0\t0\n")
                 #pilaDirecciones.append(vci[])
-                vci.append("if\t0\t0\t0")
-                vci_txt.write("if\t0\t0\t0\n")
+                vci[posicionVCI] = "si\t0\t0\t0"
+                vci_txt.write(str(obtener_clave_por_valor(vci, "si\t0\t0\t0")) + ": ")
+                posicionVCI += 1
+                #vci.append("si\t0\t0\t0")
+                vci_txt.write("si\t0\t0\t0\n")
             
             elif(tokenType == "llaveFinal" and inicioIf == 1):
                 pilaEstatutos.pop()
                 inicioIf = 0
-                if(siguiente_token[0] == "sino"):
-                    pilaEstatutos.append(siguiente_token)
+                if inicioElse == 0:
                     inicioElse = 1
+                    direccion = pilaDirecciones.pop()
+                    vci[direccion] = posicionVCI + 2
+                    n_pos = posicionVCI + 2
+                    vci_txt.write(str(n_pos)+"\t0\t0\t0\n")
+                    pilaEstatutos.append(tabla_tokens)
+                    while pilaOperadores:
+                        top = pilaOperadores.pop()
+                        vci[posicionVCI] = top[:-1]
+                        posicionVCI += 1
+                        #vci.append(top[:-1])
+                        vci_txt.write(str(obtener_clave_por_valor(vci, top[:-1])) + ": ")
+                        for token in top[:-1]:
+                            vci_txt.write(token + "\t")
+                        vci_txt.write("\n")
+                    vci[posicionVCI] = "Vacio\t0\t0\t0"
+                    posicionVCI += 1
+                    #vci_txt.write("Vacio\t0\t0\t0\n")
+                    vci[posicionVCI] = "sino\t0\t0\t0"
+                    posicionVCI += 1
+                    vci_txt.write(str(obtener_clave_por_valor(vci, "sino\t0\t0\t0")) + ": ")
+                    vci_txt.write("sino\t0\t0\t0\n")
+                    pilaEstatutos.pop()
+                
+
+            elif(tokenType == "llaveFinal" and inicioElse == 0):
+                pilaEstatutos.pop()
+                inicioElse = 0    
+                direccion = pilaDirecciones.pop()
+                vci[direccion] = posicionVCI
+                vci_txt.write(str(posicionVCI)+"\t0\t0\t0\n")
+                
             # procesar linea_actual y linea_siguiente aquí
             linea_actual = linea_siguiente
 
@@ -237,8 +293,9 @@ try:
             print("ESTATUTO/ESTRUCTURA MAL TERMINADA. HACE FALTA UN INICIO/FIN")
         
         
-        for lineaV in vci:
-            print(lineaV)
+        #for lineaV in vci:
+         #   print(lineaV)
+        # print ("\t Pila estatutos",pilaEstatutos)
         #print(simbolos_dimension)
         #print(pilaOperadores)
         #print(simbolos_dic)
